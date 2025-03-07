@@ -3,8 +3,8 @@ Model:
   model_save_path: "./experiments/models"  # The path to save the model
   load_precision_mode: "4bits" # Options: ["4bits","8bits","full"]
   lora: true # false
-  lora_r: 8
-  lora_alpha: 16
+  lora_r: 16
+  lora_alpha: 32
   lora_dropout: 0.05
   lora_bias: "none" #sticking to example : https://huggingface.co/docs/trl/main/en/peft_integration
 

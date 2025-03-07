@@ -141,7 +141,7 @@ class BaseModel(metaclass=ABCMeta):
         """
         self.log_loading()
         quantization_config = {
-            "4bits": BitsAndBytesConfig(load_in_4bit=True),
+            "4bits": BitsAndBytesConfig(load_in_4bit=True,bnb_4bit_compute_dtype=torch.float16,  bnb_4bit_quant_type="nf4"),
             "8bits": BitsAndBytesConfig(load_in_8bit=True)
         }.get(self.precission_mode, None)
         print(device)
@@ -149,7 +149,9 @@ class BaseModel(metaclass=ABCMeta):
         warnings.warn('Reintroduce: model.resize_token_embeddings(len(self.tokenizer)) ?')
         if self.lora:
             lora_config = LoraConfig(
-                task_type="CAUSAL_LM", **self.model_config.lora_params
+                task_type="CAUSAL_LM",
+                target_modules=["q_proj", "v_proj"],
+                 **self.model_config.lora_params
             )
             model = AutoModelForCausalLMWithValueHead.from_pretrained(
                 self.model_name,
@@ -157,6 +159,7 @@ class BaseModel(metaclass=ABCMeta):
                 torch_dtype=torch.bfloat16,
                 quantization_config=quantization_config,
             )
+
         else:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,

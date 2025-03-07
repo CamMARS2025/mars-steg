@@ -730,7 +730,7 @@ class PPOTrainer(BaseTrainer):
 
         # Run the model forward pass to compute rewards.
         full_kl_penalty = self.config.kl_penalty == "full"
-
+        
         with torch.no_grad():
             all_logprobs, logits_or_none, values, masks = self.batched_forward_pass(
                 self.model,
@@ -839,7 +839,7 @@ class PPOTrainer(BaseTrainer):
                             batch_dict["advantages"][mini_batch_inds].to(self.accelerator.device),
                             batch_dict["returns"][mini_batch_inds].to(self.accelerator.device),
                         )
-                                # Clean up temporary tensors after processing.
+
                         del mini_batch_dict, logprobs, logits, vpreds
                         torch.cuda.empty_cache()
                         gc.collect()

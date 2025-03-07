@@ -1,11 +1,11 @@
 Model:
   model_name:  "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"  # The model name
   model_save_path: "./experiments/models"  # The path to save the model
-  load_precision_mode: "8bits" # Options: ["4bits","8bits","full"]
+  load_precision_mode: "4bits" # Options: ["4bits","8bits","full"]
   lora: true # false
-  lora_r: 2
-  lora_alpha: 16
-  lora_dropout: 0.05
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.1
   lora_bias: "none" #sticking to example : https://huggingface.co/docs/trl/main/en/peft_integration
 
 Optimizer:
