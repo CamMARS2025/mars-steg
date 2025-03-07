@@ -773,8 +773,8 @@ class PPOTrainer(BaseTrainer):
         batch_dict = {
             "queries": queries,
             "responses": responses,
-            "logprobs": all_logprobs.to(torch.float32),
-            "values": values.to(torch.float32),
+            "logprobs": all_logprobs.to(torch.float32).to("cpu"),
+            "values": values.to(torch.float32).to("cpu"),
             "masks": masks,
             "advantages": advantages,
             "returns": returns,
@@ -803,16 +803,17 @@ class PPOTrainer(BaseTrainer):
 
                     # Use in-place slicing for tensors and list comprehensions for ragged data.
                     mini_batch_dict = {
-                       
+                        "queries": [batch_dict["queries"][i] for i in mini_batch_inds],
+                        "responses": [batch_dict["responses"][i] for i in mini_batch_inds],
                     }
-                    
-                    mini_batch_dict["queries"] = [batch_dict["queries"][i] for i in mini_batch_inds]
-                    mini_batch_dict["responses"] = [batch_dict["responses"][i] for i in mini_batch_inds]
                     #for k in model_inputs_names:
                     #    mini_batch_dict[k] = batch_dict[k][mini_batch_inds]
 
                     # Prepare model inputs for this mini-batch.
-                    model_inputs_batch = {k: batch_dict[k][mini_batch_inds] for k in model_inputs_names}
+                    model_inputs_batch = {
+                        k: batch_dict[k][mini_batch_inds].to(self.accelerator.device)  # Move to GPU
+                        for k in model_inputs_names
+                    }
 
                     with self.accelerator.accumulate(self.model):
                         logprobs, logits, vpreds, _ = self.batched_forward_pass(
@@ -829,16 +830,16 @@ class PPOTrainer(BaseTrainer):
                         del mini_batch_dict["responses"]
 
                         train_stats = self.train_minibatch(
-                            batch_dict["logprobs"][mini_batch_inds], # batch_dict["logprobs"][mini_batch_inds]
-                            batch_dict["values"][mini_batch_inds],    # batch_dict["values"][mini_batch_inds],
+                            batch_dict["logprobs"][mini_batch_inds].to(self.accelerator.device),
+                            batch_dict["values"][mini_batch_inds].to(self.accelerator.device),
                             logprobs,
                             logits,
                             vpreds,
-                            batch_dict["masks"][mini_batch_inds], # batch_dict["masks"][mini_batch_inds],
-                            batch_dict["advantages"][mini_batch_inds], #batch_dict["masks"][mini_batch_inds],
-                            batch_dict["returns"][mini_batch_inds],
+                            batch_dict["masks"][mini_batch_inds].to(self.accelerator.device),
+                            batch_dict["advantages"][mini_batch_inds].to(self.accelerator.device),
+                            batch_dict["returns"][mini_batch_inds].to(self.accelerator.device),
                         )
-                        # Clean up temporary tensors after processing.
+                                # Clean up temporary tensors after processing.
                         del mini_batch_dict, logprobs, logits, vpreds
                         torch.cuda.empty_cache()
                         gc.collect()

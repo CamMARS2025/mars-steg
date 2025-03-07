@@ -276,7 +276,7 @@ def train(ppo_config, model_config, optimizer_config, train_config, generation_c
 
                     ppo_trainer.config.batch_size = len(composite_reward_list)
                     ppo_trainer.config.mini_batch_size = 1
-                    ppo_trainer.config.gradient_accumulation_steps = len(composite_reward_list)
+                    ppo_trainer.config.gradient_accumulation_steps = 1
                     ppo_trainer.config.backward_batch_size = len(composite_reward_list)
 
                 stats = ppo_trainer.step(
