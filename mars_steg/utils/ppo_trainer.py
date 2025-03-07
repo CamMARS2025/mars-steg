@@ -742,6 +742,7 @@ class PPOTrainer(BaseTrainer):
             )
 
             with self.optional_peft_ctx():
+                print("running ref model")
                 ref_logprobs, ref_logits_or_none, _, _ = self.batched_forward_pass(
                     self.model if self.is_peft_model else self.ref_model,
                     queries,
@@ -752,15 +753,19 @@ class PPOTrainer(BaseTrainer):
 
 
         if full_kl_penalty:
+            print("running ref full_kl_penalty")
             active_full_logprobs = selective_log_softmax(logits_or_none, None, gather=False)
             ref_full_logprobs = selective_log_softmax(ref_logits_or_none, None, gather=False)
             rewards, non_score_reward, kls = self.compute_rewards(
                 scores, active_full_logprobs, ref_full_logprobs, masks
             )
         else:
+            print("running compute rewards")
             rewards, non_score_reward, kls = self.compute_rewards(
                 scores, all_logprobs, ref_logprobs, masks
             )
+            #ref_logprobs = ref_logprobs.to("cpu")
+            #all_logprobs = all_logprobs.to("cpu")
 
         values, advantages, returns = self.compute_advantages(values, rewards, masks)
 
@@ -798,19 +803,16 @@ class PPOTrainer(BaseTrainer):
 
                     # Use in-place slicing for tensors and list comprehensions for ragged data.
                     mini_batch_dict = {
-                        "logprobs": batch_dict["logprobs"][mini_batch_inds],
-                        "values": batch_dict["values"][mini_batch_inds],
-                        "masks": batch_dict["masks"][mini_batch_inds],
-                        "advantages": batch_dict["advantages"][mini_batch_inds],
-                        "returns": batch_dict["returns"][mini_batch_inds],
+                       
                     }
+                    
                     mini_batch_dict["queries"] = [batch_dict["queries"][i] for i in mini_batch_inds]
                     mini_batch_dict["responses"] = [batch_dict["responses"][i] for i in mini_batch_inds]
-                    for k in model_inputs_names:
-                        mini_batch_dict[k] = batch_dict[k][mini_batch_inds]
+                    #for k in model_inputs_names:
+                    #    mini_batch_dict[k] = batch_dict[k][mini_batch_inds]
 
                     # Prepare model inputs for this mini-batch.
-                    model_inputs_batch = {k: mini_batch_dict[k] for k in model_inputs_names}
+                    model_inputs_batch = {k: batch_dict[k][mini_batch_inds] for k in model_inputs_names}
 
                     with self.accelerator.accumulate(self.model):
                         logprobs, logits, vpreds, _ = self.batched_forward_pass(
@@ -827,14 +829,14 @@ class PPOTrainer(BaseTrainer):
                         del mini_batch_dict["responses"]
 
                         train_stats = self.train_minibatch(
-                            mini_batch_dict["logprobs"],
-                            mini_batch_dict["values"],
+                            batch_dict["logprobs"][mini_batch_inds], # batch_dict["logprobs"][mini_batch_inds]
+                            batch_dict["values"][mini_batch_inds],    # batch_dict["values"][mini_batch_inds],
                             logprobs,
                             logits,
                             vpreds,
-                            mini_batch_dict["masks"],
-                            mini_batch_dict["advantages"],
-                            mini_batch_dict["returns"],
+                            batch_dict["masks"][mini_batch_inds], # batch_dict["masks"][mini_batch_inds],
+                            batch_dict["advantages"][mini_batch_inds], #batch_dict["masks"][mini_batch_inds],
+                            batch_dict["returns"][mini_batch_inds],
                         )
                         # Clean up temporary tensors after processing.
                         del mini_batch_dict, logprobs, logits, vpreds
