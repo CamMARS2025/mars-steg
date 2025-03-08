@@ -39,6 +39,8 @@ import sys
 from mars_steg.language.language_aspects.neural_overseer import NeuralOverseer
 from mars_steg.utils.prompt_data import BatchPromptData, PromptData, log_to_wandb_merged_batch, log_merged_batch_wandb
 from mars_steg.config import ConfigLoader, ExperimentArgs, PromptConfig
+from accelerate import Accelerator
+
 
 from mars_steg.utils.common import (
     get_dataloaders_and_ref_model,
@@ -76,7 +78,8 @@ def train(ppo_config, model_config, optimizer_config, train_config, generation_c
     training_generation_kwargs = generation_config.to_training_dict()
     generation_generation_kwargs = generation_config.to_generation_dict()
 
-
+    model, optimizer = accelerator.prepare(model, optimizer)
+    
     train_dataset, val_dataset, test_dataset, train_loader, val_loader, test_loader, ref_model = get_dataloaders_and_ref_model(
         dataset_class_name = experiment_args.dataset_class_name,
         penalisation_class_name = experiment_args.penalisation_class_name,
@@ -91,6 +94,7 @@ def train(ppo_config, model_config, optimizer_config, train_config, generation_c
         number_shared_layers_for_ref_model = train_config.number_shared_layers_for_ref_model,
         device_map=device_map
     )
+
 
     ppo_trainer = PPOTrainer(
         ppo_config,
