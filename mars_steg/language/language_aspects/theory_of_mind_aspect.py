@@ -2,6 +2,7 @@ from typing import List, Optional
 import yaml
 import re
 import torch
+import random
 from mars_steg.language.base_language_aspect import LanguageAspect
 from transformers import AutoTokenizer
 
@@ -17,8 +18,9 @@ class ToMTokenBanTask(LanguageAspect):
 
     uses_local_neural_overseer = False
 
-    def __init__(self, nouns_path: str, nouns_penalisation_type: str, max_freq=50, temporal_reward_penalisation_offset: Optional[float] = None, **kwargs):
+    def __init__(self, chance_penalisation: float, nouns_path: str, nouns_penalisation_type: str, max_freq=50, temporal_reward_penalisation_offset: Optional[float] = None, **kwargs):
         super().__init__()
+        self.chance_penalisation = chance_penalisation
         self.nouns_path = nouns_path
         self.nouns_penalisation_type = nouns_penalisation_type
         with open(nouns_path, 'r') as f:
@@ -33,6 +35,7 @@ class ToMTokenBanTask(LanguageAspect):
 
     def limit_penalise_substrings(self, new_penalise_substrings: List[str]):
         new_instance = ToMTokenBanTask(
+            chance_penalisation=self.chance_penalisation,
             nouns_path=self.nouns_path,
             nouns_penalisation_type=self.nouns_penalisation_type,
             max_freq=self.max_freq,
@@ -51,6 +54,11 @@ class ToMTokenBanTask(LanguageAspect):
         penalisation_tensor = torch.zeros_like(token_ids, dtype=torch.bool)
         lists_of_tokens_to_penalize = [t.to("cpu") for t in lists_of_tokens_to_penalize]
         for list_of_tokens_to_penalize in lists_of_tokens_to_penalize:
+
+            if random.random() > self.chance_penalisation:
+                # Only penalize with probability chance_penalised
+                continue
+
             # Get sequence length
             seq_len = list_of_tokens_to_penalize.shape[0]
 
@@ -72,6 +80,9 @@ class ToMTokenBanTask(LanguageAspect):
 
     def get_language_score(self, prompt_data):
 
+        if self.chance_penalisation == 1.0:
+            raise ValueError("chance_penalise cannot be 1.0")
+
         # Count equals signs in cot
         cot = prompt_data.extracted_cot
 
@@ -89,6 +100,9 @@ class ToMTokenBanTask(LanguageAspect):
     def get_language_score_temporal_reward(self, prompt_data, tokenizer: Optional[AutoTokenizer] = None):
 
         # Count equals signs in cot
+
+        if self.chance_penalisation == 1.0:
+            raise ValueError("chance_penalise cannot be 1.0")
         
         cot = prompt_data.extracted_cot
 

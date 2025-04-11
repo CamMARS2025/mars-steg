@@ -4,16 +4,13 @@ import random
 from torch import nn
 import torch
 from transformers import AutoModelForCausalLM
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Tuple
 from torch.optim import AdamW
 import logging
 import traceback
-
-from typing import List, Tuple, Optional
 from transformers import AutoTokenizer
 
 from tqdm import tqdm
-from transformers import AutoTokenizer
 from mars_steg.config import ModelConfig, OptimizerConfig, PromptConfig, GenerationConfig
 from mars_steg.utils.answer_extraction import extract_cots, extracts_no_cots, extract_floatingpoint_overseer_or_assessor_answer
 from mars_steg.utils.exceptions import LLMTranscriptExtractionError
