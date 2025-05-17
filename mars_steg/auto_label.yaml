@@ -4,11 +4,15 @@ generation_config:
 
 input_dir: logs
 test_only: True
+entity_name: luisoso
+train_project_name: MARS-STEGO TRAIN
+output_dir: logs
+model_name: GenPRM-7B
 folders_to_process:
 - GenPRM-7B_seed_84
-# - GenPRM-7B_seed_168
-# - GenPRM-7B_seed_294
-# - GenPRM-7B_seed_378
+- GenPRM-7B_seed_168
+- GenPRM-7B_seed_294
+- GenPRM-7B_seed_378
 
 LOGGING_INFO:
   version: 1
