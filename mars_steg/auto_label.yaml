@@ -5,8 +5,10 @@ generation_config:
 input_dir: logs
 test_only: True
 folders_to_process:
-- GenPRM_seed_84
 - GenPRM-7B_seed_84
+# - GenPRM-7B_seed_168
+# - GenPRM-7B_seed_294
+# - GenPRM-7B_seed_378
 
 LOGGING_INFO:
   version: 1

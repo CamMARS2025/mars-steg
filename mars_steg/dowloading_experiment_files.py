@@ -21,15 +21,15 @@ def download_files(id_experiment, output_dir, config, test=False):
     API = wandb.Api(timeout=29)
     logger = setup_logging(config)
     run = API.run(f"{id_experiment}") #WATCH TO NOT OVERRIDE EXISTING NICKNAME
-    logger.info(f"Downloading files from experiment: {run.name}")
+    print(f"Downloading files from experiment: {run.name}")
     if test:
         step = re.search(r"step_(\d+)", run.name)
         output_root = os.path.join(output_dir, "test", f"step_{step.group(1)}")
     else:
         output_root = os.path.join(output_dir, "train")
     if os.path.exists(output_root):
-        logger.warning("✅ Folder with relevent files exists")
-        pass
+        print("✅ Folder with relevent files exists")
+        return output_root
     else:
         os.makedirs(output_root)
         if test:
@@ -45,21 +45,26 @@ def download_files(id_experiment, output_dir, config, test=False):
                         for file in artifact_ref.files():
                             if file.name.endswith(".json"):
                                 output_path = os.path.join(output_root, f"{artifact_ref.name}_{file.name}")
-                                logger.info(f"Downloading {file.name} -> {output_path}")
+                                print(f"Downloading {file.name} -> {output_path}")
                                 file.download(root=output_root, replace=True)
                         break
 
                     except Exception as e:
-                        logger.warning(f"❌ Failed to process {artifact_ref.name}: {e}")
+                        print(f"❌ Failed to process {artifact_ref.name}: {e}")
                         number_tries += 1
                         if number_tries == 5:
-                            logger.warning(f"❌ Too many failures for {artifact_ref.name}. Skipping.")
+                            print(f"❌ Too many failures for {artifact_ref.name}. Skipping.")
                             break
 
-    logger.info("✅ Done downloading all relevant artifacts.")
+    print("✅ Done downloading all relevant artifacts.")
     return output_root
 
 def create_csv_from_json_files(output_root, config, return_df=False):
+    if os.path.exists(os.path.join(output_root, "merged_data.csv")):
+        logger = setup_logging(config)
+        logger.warning("✅ Merged CSV already exists. Skipping CSV creation.")
+        if return_df:
+            return pd.read_csv(os.path.join(output_root, "merged_data.csv"))
     logger = setup_logging(config)
     all_dfs = []
     for filename in os.listdir(output_root):
@@ -104,7 +109,7 @@ def download_and_create_csv_for_a_seed(output_dir, train_id_experiment, test_ids
 
 
 
-@ray.remote
+@ray.remote(num_cpus=1)
 def process_seed(seed, experiments, config, model_name):
     logger = setup_logging(config)
     train_id_experiment = experiments['train_experiment_id']
@@ -154,7 +159,9 @@ def main(config_file):
             logger.debug(f"Checking test run: {run.name}")
             if f'seed_{seed}' in run.name and model_name in run.name:
                 experiments_dict[seed]['test_experiment_ids'].append(f'{entity}/{test_project}/{run.id}')
-                logger.info(f"Found test experiment for seed {seed}: {run.id}")
+                step = re.search(r"step_(\d+)", run.name).group(1)  # Extract step from filename
+                
+                logger.info(f"Found test experiment for seed {seed}: {run.id}. Step {step}")
         for run in train_runs:
             logger.debug(f"Checking train run: {run.name}")
             if f'seed_{seed}' in run.name and model_name in run.name:

@@ -21,7 +21,7 @@ Train:
   mini_batch_size: 1  # The PPO minibatch size
   batch_size: 4 # The batch size
   gradient_accumulation_steps: 1  # The number of gradient accumulation steps
-  seed: 378  # The seed for reproducibility
+  seed: 336  # The seed for reproducibility
   num_train_epochs: 10  # The number of training epochs
   num_eval_episodes: 10  # The number of evaluation episodes
   save_frequency: 4  # The frequency to save the model relative to the number of training data batches

@@ -4,10 +4,10 @@ test_project_name: MARS-STEGO TEST
 output_dir: logs
 model_name: GenPRM-7B
 seed_to_download:
-- 378
-- 294
-- 168
-- 84
+# - 336
+# - 252
+# - 210
+- 126
 
 LOGGING_INFO:
   version: 1
