@@ -2,7 +2,7 @@
 
 CUDA_DEVICE=0
 SCRIPT=./scripts/4_testing_theory_of_mind_on_generalisation/test/test_theory_of_mind_deepseek_7b_with_penalise.sh
-MODEL_NAME=MARS-STEGO_TRAIN_GenPRM_GenPRM-7B_seed_252
+MODEL_NAME=MARS-STEGO_TRAIN_GenPRM_GenPRM-7B_seed_210
 FIXED_ARG=0
 MAX=96
 STEP=96
