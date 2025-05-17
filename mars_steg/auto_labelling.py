@@ -186,15 +186,15 @@ def process_folder(folder, config, logging_config, training_names, testing_names
     df_test = pd.read_csv(os.path.join(csv_test_file_folder, "merged_data.csv"))
     test_label_path = os.path.join(csv_test_file_folder, "merged_data_labeled.csv")
 
-    # if os.path.exists(test_label_path):
-    #     LOGGER.warning(f"Labels already exist in the test data for {folder}.")
-    # else:
-    LOGGER.info(f"Labels do not exist in the test data for {folder}. Proceeding to label.")
-    test_label_results, test_response_results = get_label_from_df(df_test, generation_config, logging_config, training_names, testing_names)
-    df_test["label"] = test_label_results
-    df_test["response"] = test_response_results
-    df_test.to_csv(test_label_path, index=False)
-    LOGGER.info("Labels for test data have been generated and saved.")
+    if os.path.exists(test_label_path):
+        LOGGER.warning(f"Labels already exist in the test data for {folder}.")
+    else:
+        LOGGER.info(f"Labels do not exist in the test data for {folder}. Proceeding to label.")
+        test_label_results, test_response_results = get_label_from_df(df_test, generation_config, logging_config, training_names, testing_names)
+        df_test["label"] = test_label_results
+        df_test["response"] = test_response_results
+        df_test.to_csv(test_label_path, index=False)
+        LOGGER.info("Labels for test data have been generated and saved.")
 
     LOGGER.info(f"✅ Finished processing folder: {folder}")
 
